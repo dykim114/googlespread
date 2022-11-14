@@ -1,0 +1,194 @@
+<참고문서>
+https://kutar37.tistory.com/entry/%EA%B5%AC%EA%B8%80-%EC%8A%A4%ED%94%84%EB%A0%88%EB%93%9C%EC%8B%9C%ED%8A%B8-API-%ED%99%9C%EC%9A%A9%ED%95%98%EA%B8%B0-SELECT
+https://kutar37.tistory.com/entry/%EA%B5%AC%EA%B8%80-%EC%8A%A4%ED%94%84%EB%A0%88%EB%93%9C%EC%8B%9C%ED%8A%B8-API-%ED%99%9C%EC%9A%A9%ED%95%98%EA%B8%B0-INSERT
+
+https://github.com/dykim114/googlespread.git
+
+
+googlespread_test문서 
+key - 1qLJOfAqBr5WgVguT5fpO0EhwpsBNBeS-YU-cxk1P4uM
+https://docs.google.com/spreadsheets/d/1qLJOfAqBr5WgVguT5fpO0EhwpsBNBeS-YU-cxk1P4uM/edit?usp=sharing
+
+웹앱
+https://www.appsheet.com/start/e0c40dfa-6d2c-4a74-89c1-3a0f65fb9677
+
+AKfycbxhNGMjXaVwUPcv8c_rgVOK29G32yvJb19QdbmL4_gqU6e4s9sk8fQ5PRNMubNnsJ7T
+https://script.google.com/macros/s/AKfycbxhNGMjXaVwUPcv8c_rgVOK29G32yvJb19QdbmL4_gqU6e4s9sk8fQ5PRNMubNnsJ7T/exec
+
+https://script.google.com/macros/s/AKfycbxmSC8OeMYy0gbdKk8tnbVoTp40ojUNW4wNp0Qfo54L-Ch5Vazigr631AeBXkPALQSc/exec
+
+테스트배포
+https://script.google.com/macros/s/AKfycbwaW6LbLnQk7C0WzqEmFeVRc0IrkYfZ2rKCRO67kxQ/dev
+
+
+
+
+https://developers.google.com/chart/interactive/docs/querylanguage
+	- tq 뒤의 sql 은 위의 문서 참조
+	- FROM은 이 언어에서 삭제
+	- 특정 시트 안에서 데이터를 찾기 위해서는 파라미터에 sheet=시트이름을 사용
+
+https://docs.google.com/spreadsheets/d/해당 스프레드시트 key/gviz/tq?
+
+https://docs.google.com/spreadsheets/d/1qLJOfAqBr5WgVguT5fpO0EhwpsBNBeS-YU-cxk1P4uM/gviz/tq?
+
+/*O_o*/
+google.visualization.Query.setResponse({"version":"0.6","reqId":"0","status":"ok","sig":"1381853896","table":{"cols":[{"id":"A","label":"이름","type":"string"},{"id":"B","label":"나이","type":"number","pattern":"General"},{"id":"C","label":"사는곳","type":"string"}],"rows":[{"c":[{"v":"김갑수"},{"v":40.0,"f":"40"},{"v":"서울"}]},{"c":[{"v":"홍길동"},{"v":45.0,"f":"45"},{"v":"부산"}]},{"c":[{"v":"김영희"},{"v":50.0,"f":"50"},{"v":"대구"}]}],"parsedNumHeaders":1}});
+
+https://docs.google.com/spreadsheets/d/1qLJOfAqBr5WgVguT5fpO0EhwpsBNBeS-YU-cxk1P4uM/gviz/tq?tq=SELECT+A%2cB%2cC+WHERE+B%3d45
+https://docs.google.com/spreadsheets/d/1qLJOfAqBr5WgVguT5fpO0EhwpsBNBeS-YU-cxk1P4uM/gviz/tq?tq=SELECT%20A%2CB%2CC%20WHERE%20B%3D45
+
+/*O_o*/
+google.visualization.Query.setResponse({"version":"0.6","reqId":"0","status":"ok","sig":"1983377928","table":{"cols":[{"id":"A","label":"이름","type":"string"},{"id":"B","label":"나이","type":"number","pattern":"General"},{"id":"C","label":"사는곳","type":"string"}],"rows":[{"c":[{"v":"홍길동"},{"v":45.0,"f":"45"},{"v":"부산"}]}],"parsedNumHeaders":0}});
+
+
+-- 소스코드
+
+var jsonp = function (url) {
+    var script = window.document.createElement('script');
+    script.async = true;
+    script.src = url;
+    script.onerror = function () {
+        alert('Can not access JSONP file.')
+    };
+    var done = false;
+    script.onload = script.onreadystatechange = function () {
+        if (!done && (!this.readyState || this.readyState === 'loaded' || this.readyState ===
+                'complete')) {
+            done = true;
+            script.onload = script.onreadystatechange = null;
+            if (script.parentNode) {
+                return script.parentNode.removeChild(script);
+            }
+        }
+    };
+    window.document.getElementsByTagName('head')[0].appendChild(script);
+};
+
+var parse = function (data) {
+    var column_length = data.table.cols.length;
+    if (!column_length || !data.table.rows.length) {
+        return false;
+    }
+    var columns = [],
+        result = [],
+        row_length,
+        value;
+    for (var column_idx in data.table.cols) {
+        columns.push(data.table.cols[column_idx].label);
+    }
+    for (var rows_idx in data.table.rows) {
+        row_length = data.table.rows[rows_idx]['c'].length;
+        if (column_length != row_length) {
+            return false;
+        }
+        for (var row_idx in data.table.rows[rows_idx]['c']) {
+            if (!result[rows_idx]) {
+                result[rows_idx] = {};
+            }
+
+            value = !!data.table.rows[rows_idx]['c'][row_idx].v ? data.table.rows[rows_idx]['c'][row_idx]
+                .v : null;
+            if (data.table.rows[rows_idx]['c'][row_idx].f !== undefined && data.table.rows[rows_idx]['c'][
+                    row_idx
+                ].v !== undefined) {
+                value = data.table.rows[rows_idx]['c'][row_idx].f;
+            }
+            result[rows_idx][columns[row_idx]] = value;
+        }
+    }
+    return result;
+};
+
+var query = function (sql, sheetName, callback) {
+    var myKey = '1R-8M7lQjmAWr7Lliku57e9FU-Kjcofu2mNiLU3pkmFs';
+    var url = 'https://docs.google.com/spreadsheets/d/'+myKey+'/gviz/tq?',
+        params = {
+            tq: encodeURIComponent(sql),
+            sheet: encodeURIComponent(sheetName),
+            tqx: 'responseHandler:' + callback
+        },
+        qs = [];
+    for (var key in params) {
+        qs.push(key + '=' + params[key]);
+    }
+    url += qs.join('&');
+    return jsonp(url); // Call JSONP helper function
+}
+
+var my_callback = function (data) {
+    data = parse(data); // Call data parser helper function
+  
+    //AND THEN WHATEVER YOU WANT 
+    for(var i = 0 ; i < datas.length; i++){
+        if(JSON.stringify(datas[i]) == JSON.stringify(data)) {
+            return false;
+        }
+    }
+    
+    datas.push(data);
+
+    // EXTRACT VALUE FOR HTML HEADER. 
+    var col = [];
+    for (var i = 0; i < data.length; i++) {
+        for (var key in data[i]) {
+            console.log(col.indexOf(key))
+            if (col.indexOf(key) === -1) {
+                col.push(key);
+            }
+        }
+    }
+    var table = document.querySelector("#showData table");
+    if (table === null || table == undefined) {
+        // CREATE DYNAMIC TABLE.
+        table = document.createElement("table");
+
+        // CREATE HTML TABLE HEADER ROW USING THE EXTRACTED HEADERS ABOVE.
+        var tr = table.insertRow(-1); // TABLE ROW.
+
+        for (var i = 0; i < col.length; i++) {
+            var th = document.createElement("th"); // TABLE HEADER.
+            th.innerHTML = col[i];
+            tr.appendChild(th);
+        }
+
+        // ADD JSON DATA TO THE TABLE AS ROWS.
+        for (var i = 0; i < data.length; i++) {
+
+            tr = table.insertRow(-1);
+
+            for (var j = 0; j < col.length; j++) {
+                var tabCell = tr.insertCell(-1);
+                tabCell.innerHTML = data[i][col[j]];
+            }
+        }
+
+        // FINALLY ADD THE NEWLY CREATED TABLE WITH JSON DATA TO A CONTAINER.
+        var divContainer = document.getElementById("showData");
+        divContainer.innerHTML = "";
+        divContainer.appendChild(table);
+    } else {
+
+        // ADD JSON DATA TO THE TABLE AS ROWS.
+        for (var i = 0; i < data.length; i++) {
+
+            var tr = table.insertRow();
+
+            for (var j = 0; j < col.length; j++) {
+                var tabCell = tr.insertCell(-1);
+                tabCell.innerHTML = data[i][col[j]];
+            }
+        }
+    }
+
+}
+
+var datas = [];
+
+$('#search-google-btn').click(function(){
+    $('#showData').html('');
+    datas = [];
+
+    query('SELECT * WHERE B > 25 ORDER BY B DESC', '시트1', 'my_callback');
+
+});
